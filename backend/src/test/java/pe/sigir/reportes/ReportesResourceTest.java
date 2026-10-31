@@ -38,6 +38,37 @@ class ReportesResourceTest {
     }
 
     @Test
+    void exportarExcelConDosHojasYSinEjecutarFormulas() throws Exception {
+        Api.Sesion analista = Api.usuario("ANALISTA");
+        Map<String, Object> d = datos("=HYPERLINK(\"http://malo\")");
+        d.put("severidad", "CRITICA");
+        String codigo = analista.req().body(d).post("/api/incidentes").then().statusCode(201).extract().path("codigo");
+
+        byte[] archivo = Api.usuario("AUDITOR").req().get("/api/reportes/incidentes.xlsx").then().statusCode(200)
+                .contentType(containsString("spreadsheetml"))
+                .header("Content-Disposition", containsString(".xlsx"))
+                .extract().asByteArray();
+
+        try (var libro = new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(archivo))) {
+            org.junit.jupiter.api.Assertions.assertEquals("Incidentes", libro.getSheetAt(0).getSheetName());
+            org.junit.jupiter.api.Assertions.assertEquals("Resumen", libro.getSheetAt(1).getSheetName());
+            var hoja = libro.getSheetAt(0);
+            org.junit.jupiter.api.Assertions.assertEquals("Código", hoja.getRow(0).getCell(0).getStringCellValue());
+            org.apache.poi.ss.usermodel.Row fila = null;
+            for (var r : hoja) {
+                if (codigo.equals(r.getCell(0).getStringCellValue())) {
+                    fila = r;
+                }
+            }
+            org.junit.jupiter.api.Assertions.assertNotNull(fila, "no está la fila del incidente");
+            var titulo = fila.getCell(1);
+            org.junit.jupiter.api.Assertions.assertEquals(org.apache.poi.ss.usermodel.CellType.STRING, titulo.getCellType());
+            org.junit.jupiter.api.Assertions.assertEquals("CRITICA", fila.getCell(3).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertTrue(org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(fila.getCell(9)));
+        }
+    }
+
+    @Test
     void resumenPorReguladorYTipo() {
         Api.Sesion analista = Api.usuario("ANALISTA");
         Map<String, Object> d = datos("Para resumen");

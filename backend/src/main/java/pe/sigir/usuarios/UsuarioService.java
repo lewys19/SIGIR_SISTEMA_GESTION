@@ -6,6 +6,7 @@ import pe.sigir.auditoria.Auditor;
 import pe.sigir.auth.PasswordHasher;
 import pe.sigir.compartido.NegocioException;
 import pe.sigir.compartido.NoEncontradoException;
+import pe.sigir.compartido.Textos;
 import pe.sigir.compartido.UsuarioActual;
 import pe.sigir.usuarios.UsuarioDtos.ActualizarUsuario;
 import pe.sigir.usuarios.UsuarioDtos.CrearUsuario;
@@ -33,14 +34,14 @@ public class UsuarioService {
 
     @Transactional
     public Usuario crear(CrearUsuario p) {
-        String email = p.email().trim().toLowerCase();
+        String email = Textos.email(p.email());
         if (dao.buscarPorEmail(email).isPresent()) {
             throw new NegocioException("Ya existe un usuario con ese correo");
         }
         PoliticaPassword.validar(p.password());
         Usuario u = new Usuario();
         u.email = email;
-        u.nombre = p.nombre().trim();
+        u.nombre = Textos.limpiar(p.nombre());
         u.rol = p.rol();
         u.passwordHash = hasher.hashear(p.password());
         dao.guardar(u);
@@ -57,7 +58,7 @@ public class UsuarioService {
             throw new NegocioException("No puedes desactivarte ni cambiarte el rol a ti mismo");
         }
         String antes = "rol=" + u.rol + " activo=" + u.activo;
-        u.nombre = p.nombre().trim();
+        u.nombre = Textos.limpiar(p.nombre());
         u.rol = p.rol();
         u.activo = p.activo();
         auditor.registrar(actual.email(), "USUARIO_ACTUALIZADO", "USUARIO", String.valueOf(u.id),

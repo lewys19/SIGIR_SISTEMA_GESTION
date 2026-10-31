@@ -4,6 +4,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 import pe.sigir.auth.CredencialesInvalidasException;
+import pe.sigir.auth.DemasiadosIntentosException;
 
 /** Traduce las excepciones de negocio a respuestas HTTP con {"mensaje": "..."}. */
 public class ManejadorErrores {
@@ -11,6 +12,13 @@ public class ManejadorErrores {
     @ServerExceptionMapper
     public Response credencialesInvalidas(CredencialesInvalidasException e) {
         return error(Response.Status.UNAUTHORIZED, e.getMessage());
+    }
+
+    @ServerExceptionMapper
+    public Response demasiadosIntentos(DemasiadosIntentosException e) {
+        return Response.status(429).type(MediaType.APPLICATION_JSON)
+                .header("Retry-After", e.minutos() * 60)
+                .entity(new ErrorResponse(e.getMessage())).build();
     }
 
     @ServerExceptionMapper

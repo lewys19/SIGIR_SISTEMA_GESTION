@@ -6,6 +6,7 @@ import pe.sigir.usuarios.Rol;
 import pe.sigir.usuarios.Usuario;
 import pe.sigir.usuarios.UsuarioDao;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +31,8 @@ class AuthServiceTest {
         };
         TokenEmisor emisor = u -> "token-de-" + u.email;
         servicio = new AuthService(dao, hasher, emisor,
-                (actor, accion, entidad, id, detalle) -> auditado.add(accion + "|" + actor));
+                (actor, accion, entidad, id, detalle) -> auditado.add(accion + "|" + actor),
+                new ProteccionFuerzaBruta(3, Duration.ofMinutes(15), com.google.common.base.Ticker.systemTicker()));
 
         usuarios.put("ana@sigir.pe", usuario("ana@sigir.pe", "Secreta1!", true));
         usuarios.put("baja@sigir.pe", usuario("baja@sigir.pe", "Secreta1!", false));
@@ -48,6 +50,15 @@ class AuthServiceTest {
     void passwordIncorrectaLanzaCredencialesInvalidasYSeAudita() {
         assertThrows(CredencialesInvalidasException.class, () -> servicio.login("ana@sigir.pe", "otra"));
         assertEquals(List.of("LOGIN_FALLIDO|ana@sigir.pe"), auditado);
+    }
+
+    @Test
+    void trasVariosFallosNiLaClaveCorrectaEntra() {
+        for (int i = 0; i < 3; i++) {
+            assertThrows(CredencialesInvalidasException.class, () -> servicio.login("ana@sigir.pe", "mala"));
+        }
+        assertThrows(DemasiadosIntentosException.class, () -> servicio.login("ana@sigir.pe", "Secreta1!"));
+        assertEquals("LOGIN_BLOQUEADO|ana@sigir.pe", auditado.getLast());
     }
 
     @Test

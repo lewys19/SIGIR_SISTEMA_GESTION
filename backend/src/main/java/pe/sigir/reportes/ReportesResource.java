@@ -49,6 +49,23 @@ public class ReportesResource {
                 .build();
     }
 
+    @GET
+    @Path("/incidentes.xlsx")
+    @Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public Response excel(@QueryParam("desde") LocalDate desde, @QueryParam("hasta") LocalDate hasta) {
+        Rango r = rango(desde, hasta);
+        LocalDate hoy = LocalDate.now();
+        var incidentes = dao.incidentes(r);
+        Resumen resumen = new Resumen(dao.total(r), dao.porRegulador(r, hoy), dao.porTipo(r), dao.cumplimiento(r));
+        byte[] archivo = ExcelIncidentes.generar(incidentes, resumen, r.desde(), r.hasta(), hoy);
+        auditor.registrar(actual.email(), "REPORTE_EXPORTADO", "REPORTE", null,
+                "incidentes.xlsx " + r.desde() + " a " + r.hasta() + " (" + incidentes.size() + " filas)");
+        String nombre = "incidentes-" + r.desde() + "-a-" + r.hasta() + ".xlsx";
+        return Response.ok(archivo)
+                .header("Content-Disposition", "attachment; filename=\"" + nombre + "\"")
+                .build();
+    }
+
     /** Sin fechas: los últimos 90 días. */
     private static Rango rango(LocalDate desde, LocalDate hasta) {
         LocalDate h = hasta != null ? hasta : LocalDate.now();

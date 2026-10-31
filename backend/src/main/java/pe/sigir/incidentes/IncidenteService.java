@@ -6,6 +6,7 @@ import jakarta.enterprise.event.Event;
 import jakarta.transaction.Transactional;
 import pe.sigir.auditoria.Auditor;
 import pe.sigir.compartido.*;
+import pe.sigir.compartido.Textos;
 import pe.sigir.eventos.EventoIncidente;
 import pe.sigir.eventos.TipoEvento;
 import pe.sigir.incidentes.IncidenteDtos.*;
@@ -146,16 +147,16 @@ public class IncidenteService {
     }
 
     private static void copiar(IncidenteRequest p, Incidente i) {
-        i.titulo = p.titulo().trim();
-        i.descripcion = p.descripcion().trim();
+        i.titulo = Textos.limpiar(p.titulo());
+        i.descripcion = Textos.recortar(p.descripcion());
         i.tipo = p.tipo();
         i.severidad = p.severidad();
         i.regulador = p.regulador();
-        i.area = p.area();
+        i.area = Textos.limpiar(p.area());
         i.fechaOcurrencia = p.fechaOcurrencia();
         i.fechaDeteccion = p.fechaDeteccion();
         i.fechaLimiteReporte = p.severidad().fechaLimite(p.fechaDeteccion());
-        i.impacto = p.impacto();
-        i.medidas = p.medidas();
+        i.impacto = Textos.recortar(p.impacto());
+        i.medidas = Textos.recortar(p.medidas());
     }
 }

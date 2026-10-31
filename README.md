@@ -37,6 +37,14 @@ backend/src/main/java/pe/sigir/
   compartido/     errores → HTTP, paginación, usuario actual
 ```
 
+## Librerías de apoyo
+| Librería | Versión | Uso en SIGIR | Seguridad |
+|---|---|---|---|
+| **Logback** (`quarkus-logging-logback`) | 1.2.0 | Logs a `logs/sigir.log`, un archivo por día, 30 días, máx. 1 GB (`logback.xml`) | Enmascara correos (`a***@sigir.pe`) y JWT (`[JWT]`) en todos los logs |
+| **Google Guava** | 33.7.2 | `ProteccionFuerzaBruta`: caché con expiración que cuenta intentos fallidos de login | 5 fallos → cuenta bloqueada 15 min (HTTP 429), auditado como `LOGIN_BLOQUEADO` |
+| **Apache POI** (`poi-ooxml`) | 6.0.0 | `ExcelIncidentes`: reporte `.xlsx` con hoja de incidentes (filtros, colores por severidad) y hoja de resumen | Los textos se guardan como texto, nunca como fórmula (sin inyección de fórmulas) |
+| **Apache Commons Lang** | 3.x (BOM de Quarkus) | `Textos`: normaliza espacios, correos y recorta textos largos | Ningún registro de auditoría crece sin límite (máx. 2000 caracteres) |
+
 ## Flujo de un incidente
 `BORRADOR → EN_REVISION → APROBADO → CERRADO` (y `EN_REVISION → RECHAZADO → EN_REVISION`).
 Solo el autor edita y envía; nadie aprueba ni rechaza su propio incidente.
@@ -51,7 +59,7 @@ Plazo para reportar al regulador desde la detección: Crítica 1 día · Alta 3 
 | AUDITOR | dashboard, ver incidentes, monitoreo, reportes, auditoría |
 
 ## Tests
-- Backend: 62 (unitarios de dominio + integración con PostgreSQL y Redis reales vía Dev Services)
+- Backend: 73 (unitarios de dominio + integración con PostgreSQL y Redis reales vía Dev Services)
 - Frontend: `cd frontend && npm test` (Vitest)
 
 ## Sprints

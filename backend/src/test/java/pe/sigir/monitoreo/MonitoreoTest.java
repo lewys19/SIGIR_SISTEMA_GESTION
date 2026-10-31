@@ -32,8 +32,16 @@ class MonitoreoTest {
         WebSocket ws = vertx.createWebSocketClient()
                 .connect(base.getPort(), base.getHost(), "/ws/eventos?ticket=" + ticket)
                 .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
-        ws.textMessageHandler(mensajes::add);
-        ws.closeHandler(v -> cerrado.complete(null));
+        try {
+            ws.textMessageHandler(mensajes::add);
+            ws.closeHandler(v -> cerrado.complete(null));
+        } catch (IllegalStateException yaCerrado) {
+            // el servidor puede cerrar antes de que registremos los oyentes (ticket inválido)
+            cerrado.complete(null);
+        }
+        if (ws.isClosed()) {
+            cerrado.complete(null);
+        }
         return ws;
     }
 

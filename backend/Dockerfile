@@ -9,7 +9,7 @@ RUN mvn -B -q package -DskipTests
 # --- Etapa 2: solo el JRE 21 y la app ---
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-RUN useradd -r -u 1001 sigir
+RUN useradd -r -u 1001 sigir && mkdir -p /app/logs && chown sigir /app/logs
 COPY --from=build --chown=sigir /app/target/quarkus-app/ ./
 USER sigir
 EXPOSE 8080

@@ -14,9 +14,9 @@ export default function Reportes() {
   const [errorDescarga, setErrorDescarga] = useState(null)
   const { datos, error, cargando } = useCarga(() => api(`/reportes/resumen${query(rango)}`), [rango])
 
-  const exportar = async () => {
+  const exportar = async (formato) => {
     setErrorDescarga(null)
-    try { await descargar(`/reportes/incidentes.csv${query(rango)}`, 'incidentes.csv') } catch (e) { setErrorDescarga(e) }
+    try { await descargar(`/reportes/incidentes.${formato}${query(rango)}`, `incidentes.${formato}`) } catch (e) { setErrorDescarga(e) }
   }
   const maxTipo = Math.max(1, ...(datos?.porTipo ?? []).map((t) => t.total))
 
@@ -24,7 +24,10 @@ export default function Reportes() {
     <div className="pila">
       <div className="titulo-con-accion">
         <h1>Reportes</h1>
-        <button className="btn-principal" onClick={exportar}>⬇ Exportar CSV (Excel)</button>
+        <div className="acciones">
+          <button className="btn-secundario" onClick={() => exportar('csv')}>⬇ CSV</button>
+          <button className="btn-principal" onClick={() => exportar('xlsx')}>⬇ Exportar Excel</button>
+        </div>
       </div>
       <div className="filtros tarjeta">
         <Campo etiqueta="Detectados desde">

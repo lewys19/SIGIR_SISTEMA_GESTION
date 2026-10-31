@@ -43,6 +43,22 @@ class AuthResourceTest {
     }
 
     @Test
+    void fuerzaBrutaBloqueaLaCuentaCon429() {
+        pe.sigir.soporte.Api.Sesion victima = pe.sigir.soporte.Api.usuario("ANALISTA");
+        for (int i = 0; i < 5; i++) {
+            given().contentType(ContentType.JSON)
+                    .body("{\"email\":\"" + victima.email() + "\",\"password\":\"Adivina" + i + "\"}")
+                    .when().post("/api/auth/login").then().statusCode(401);
+        }
+        given().contentType(ContentType.JSON)
+                .body("{\"email\":\"" + victima.email() + "\",\"password\":\"" + pe.sigir.soporte.Api.CLAVE + "\"}")
+                .when().post("/api/auth/login")
+                .then().statusCode(429)
+                .header("Retry-After", "900")
+                .body("mensaje", containsString("15 minutos"));
+    }
+
+    @Test
     void emailMalFormadoDa400() {
         given().contentType(ContentType.JSON)
                 .body("{\"email\":\"no-es-correo\",\"password\":\"x\"}")

@@ -2,6 +2,7 @@ package pe.sigir.auditoria;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import pe.sigir.compartido.Textos;
 
 /**
  * Auditoría síncrona: se une a la transacción del caso de uso (REQUIRED).
@@ -25,7 +26,7 @@ public class AuditoriaService implements Auditor {
         r.accion = accion;
         r.entidad = entidad;
         r.entidadId = entidadId;
-        r.detalle = detalle;
+        r.detalle = Textos.resumir(detalle, 2000);   // ningún registro puede crecer sin límite
         dao.insertar(r);
     }
 }

@@ -1,0 +1,29 @@
+<configuration>
+    <!--
+      Enmascaramiento de datos sensibles en TODOS los logs:
+        - correos:  ana.perez@sigir.pe  ->  a***@sigir.pe
+        - JWT:      eyJhbGciOi...       ->  [JWT]
+    -->
+    <property name="MENSAJE_SEGURO"
+              value="%replace(%replace(%msg){'([A-Za-z0-9])[A-Za-z0-9._%+-]*@', '$1***@'}){'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', '[JWT]'}"/>
+    <property name="LOG_DIR" value="${sigir.log.dir:-logs}"/>
+
+    <appender name="ARCHIVO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/sigir.log</file>
+        <!-- Un archivo por día, se guardan 30 días y como máximo 1 GB en total -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/sigir.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%logger{36}] ${MENSAJE_SEGURO}%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="pe.sigir" level="INFO"/>
+
+    <root level="INFO">
+        <appender-ref ref="ARCHIVO"/>
+    </root>
+</configuration>
