@@ -1,0 +1,12 @@
+# Secretos: nunca a git
+.env
+claves/
+
+# Compilados y dependencias
+backend/target/
+frontend/node_modules/
+frontend/dist/
+
+.idea/
+.vscode/
+*.log

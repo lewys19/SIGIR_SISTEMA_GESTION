@@ -1,0 +1,56 @@
+name: sigir
+
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: sigir-db
+    environment:
+      POSTGRES_DB: sigir
+      POSTGRES_USER: sigir
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en .env}
+    volumes:
+      - sigir-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sigir -d sigir"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: sigir-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - sigir-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    container_name: sigir-api
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/sigir
+      DB_USER: sigir
+      DB_PASSWORD: ${DB_PASSWORD}
+      SIGIR_ADMIN_PASSWORD: ${SIGIR_ADMIN_PASSWORD:?Falta SIGIR_ADMIN_PASSWORD en .env}
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ./claves:/claves:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    container_name: sigir-web
+    ports:
+      - "8180:80"
+    depends_on:
+      - api
+
+volumes:
+  sigir-db:
+  sigir-redis:
